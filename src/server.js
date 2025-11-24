@@ -5,6 +5,7 @@ import cors from "cors";
 //API route imports
 import authRoutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
+import productRoutes from "./routes/productRoutes.js";
 
 //Middleware imports
 import authMiddleware from "./middleware/authMiddleware.js";
@@ -29,5 +30,6 @@ app.get("/", (req, res) => {
 
 app.use("/auth", authRoutes);
 app.use("/users", authMiddleware, userRoutes);
+app.use("/products", productRoutes);
 
 app.listen(PORT, () => console.log(`Server has started on ${PORT}`));
