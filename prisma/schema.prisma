@@ -1,9 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
   output   = "../src/generated/prisma"
@@ -14,13 +11,94 @@ datasource db {
   url = env("DATABASE_URL")
 }
 
-// User model for app users
-model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  username  String   @unique
-  password  String
-  firstName String?
-  lastName  String? 
+// -----------------------------------
+//           ENUMS (optional)
+// -----------------------------------
+enum PaymentMethod {
+  CASH
+  CARD
+  OTHER
 }
 
+// -----------------------------------
+//              MODELS
+// -----------------------------------
+
+model USER {
+  id             Int          @id @default(autoincrement())
+  username       String        @unique
+  password_hash  String
+  created_at     DateTime      @default(now())
+  updated_at     DateTime      @updatedAt
+
+  // Relations
+  billings       BILLING[]
+  logs           LOG[]
+}
+
+model LOG {
+  id          Int       @id @default(autoincrement())
+  user_id     Int
+  action      String
+  description String?
+  created_at  DateTime  @default(now())
+
+  // Relations
+  user USER @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model CATEGORY {
+  id          Int        @id @default(autoincrement())
+  name        String
+  description String?
+  created_at  DateTime   @default(now())
+  updated_at  DateTime   @updatedAt
+
+  // Relations
+  products PRODUCT[]
+}
+
+model PRODUCT {
+  id          Int        @id @default(autoincrement())
+  category_id Int
+  name        String
+  description String?
+  price       Float
+  created_at  DateTime   @default(now())
+  updated_at  DateTime   @updatedAt
+
+  // Relations
+  category CATEGORY @relation(fields: [category_id], references: [id], onDelete: SetNull)
+  billingItems BILLING_ITEMS[]
+}
+
+model BILLING {
+  id             Int          @id @default(autoincrement())
+  user_id        Int
+  invoice_number String        @unique
+  sub_total      Float
+  tax            Float
+  discount       Float
+  total          Float
+  payment_method PaymentMethod
+  created_at     DateTime      @default(now())
+
+  // Relations
+  user USER @relation(fields: [user_id], references: [id])
+  items BILLING_ITEMS[]
+}
+
+model BILLING_ITEMS {
+  id            Int        @id @default(autoincrement())
+  billing_id    Int
+  product_id    Int
+  quantity      Int
+  price_at_time Float
+  total         Float
+  created_at    DateTime   @default(now())
+  updated_at    DateTime   @updatedAt
+
+  // Relations
+  billing BILLING @relation(fields: [billing_id], references: [id], onDelete: Cascade)
+  product PRODUCT @relation(fields: [product_id], references: [id])
+}
