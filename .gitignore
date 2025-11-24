@@ -91,3 +91,5 @@ logs
 *.swp
 *.swo
 *~
+
+/src/generated/prisma
