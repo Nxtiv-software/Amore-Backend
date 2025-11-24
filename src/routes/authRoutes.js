@@ -37,7 +37,7 @@ router.post("/register", async (req, res) => {
 
     // create a token
     const token = jwt.sign(
-      { id: user.id, role: user.role },
+      { id: user.id },
       process.env.JWT_SECRET,
       {
         expiresIn: "24h",
@@ -50,7 +50,6 @@ router.post("/register", async (req, res) => {
       user: {
         id: user.id,
         username: user.username,
-        role: user.role,
       },
     });
   } catch (error) {
@@ -67,7 +66,7 @@ router.post("/login", async (req, res) => {
       where: {
         username: username,
       },
-      select: { id: true, role: true, password: true, username: true },
+      select: { id: true, password: true, username: true },
     });
 
     if (!user) {
@@ -82,7 +81,7 @@ router.post("/login", async (req, res) => {
 
     // then we have a successful login
     const token = jwt.sign(
-      { id: user.id, role: user.role },
+      { id: user.id },
       process.env.JWT_SECRET,
       {
         expiresIn: "24h",
@@ -95,7 +94,6 @@ router.post("/login", async (req, res) => {
       user: {
         id: user.id,
         username: user.username,
-        role: user.role,
       },
     });
   } catch (error) {

@@ -27,43 +27,46 @@ enum PaymentMethod {
 //              MODELS
 // -----------------------------------
 
-model USER {
-  id             Int          @id @default(autoincrement())
+model user {
+  id             String        @id @default(uuid())
   username       String        @unique
   password       String
   created_at     DateTime      @default(now())
   updated_at     DateTime      @updatedAt
 
   // Relations
-  billings       BILLING[]
-  logs           LOG[]
+  billings       billing[]
+  logs           log[]
+  categories     category[]
 }
 
-model LOG {
-  id          Int       @id @default(autoincrement())
-  user_id     Int
+model log {
+  id          String       @id @default(uuid())
+  user_id     String
   action      String
   description String?
   created_at  DateTime  @default(now())
 
   // Relations
-  user USER @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user user @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }
 
-model CATEGORY {
-  id          Int        @id @default(autoincrement())
+model category {
+  id          String        @id @default(uuid())
+  user_id     String 
   name        String
   description String?
   created_at  DateTime   @default(now())
   updated_at  DateTime   @updatedAt
 
   // Relations
-  products PRODUCT[]
+  user     user      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  products product[]
 }
 
-model PRODUCT {
-  id          Int        @id @default(autoincrement())
-  category_id Int
+model product {
+  id          String        @id @default(uuid())
+  category_id String
   name        String
   description String?
   price       Float
@@ -71,13 +74,13 @@ model PRODUCT {
   updated_at  DateTime   @updatedAt
 
   // Relations
-  category CATEGORY @relation(fields: [category_id], references: [id], onDelete: SetNull)
-  billingItems BILLING_ITEMS[]
+  category category @relation(fields: [category_id], references: [id], onDelete: SetNull)
+  billingItems billing_item[]
 }
 
-model BILLING {
-  id             Int          @id @default(autoincrement())
-  user_id        Int
+model billing {
+  id             String          @id @default(uuid())
+  user_id        String
   invoice_number String        @unique
   sub_total      Float
   tax            Float
@@ -87,14 +90,14 @@ model BILLING {
   created_at     DateTime      @default(now())
 
   // Relations
-  user USER @relation(fields: [user_id], references: [id])
-  items BILLING_ITEMS[]
+  user user @relation(fields: [user_id], references: [id])
+  items billing_item[]
 }
 
-model BILLING_ITEMS {
-  id            Int        @id @default(autoincrement())
-  billing_id    Int
-  product_id    Int
+model billing_item {
+  id            String        @id @default(uuid())
+  billing_id    String
+  product_id    String
   quantity      Int
   price_at_time Float
   total         Float
@@ -102,7 +105,7 @@ model BILLING_ITEMS {
   updated_at    DateTime   @updatedAt
 
   // Relations
-  billing BILLING @relation(fields: [billing_id], references: [id], onDelete: Cascade)
-  product PRODUCT @relation(fields: [product_id], references: [id])
+  billing billing @relation(fields: [billing_id], references: [id], onDelete: Cascade)
+  product product @relation(fields: [product_id], references: [id])
 }
 
