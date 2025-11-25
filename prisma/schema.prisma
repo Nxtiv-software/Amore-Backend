@@ -14,13 +14,107 @@ datasource db {
   url = env("DATABASE_URL")
 }
 
-// User model for app users
-model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  username  String   @unique
-  password  String
-  firstName String?
-  lastName  String? 
+// -----------------------------------
+//           ENUMS (optional)
+// -----------------------------------
+enum PaymentMethod {
+  CASH
+  CARD
+  OTHER
 }
+
+// -----------------------------------
+//              MODELS
+// -----------------------------------
+
+model user {
+  id         String   @id @default(uuid())
+  username   String   @unique
+  password   String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  billings   billing[]
+  logs       log[]
+  categories category[]
+  cart_items billing_cart_item[]   // <--- NEW
+}
+
+model log {
+  id          String   @id @default(uuid())
+  user_id     String
+  action      String
+  description String?
+  created_at  DateTime @default(now())
+
+  user user @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model category {
+  id          String   @id @default(uuid())
+  user_id     String
+  name        String
+  description String?
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  user     user      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  products product[]
+}
+
+model product {
+  id          String    @id @default(uuid())
+  category_id String?
+  name        String
+  description String?
+  price       Float
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  category     category?     @relation(fields: [category_id], references: [id], onDelete: SetNull)
+  billingItems billing_item[]
+  cart_items   billing_cart_item[]   // <--- NEW
+}
+
+model billing_cart_item {
+  id         String   @id @default(uuid())
+  user_id    String
+  product_id String
+  quantity   Int
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  user    user    @relation(fields: [user_id], references: [id])
+  product product @relation(fields: [product_id], references: [id])
+}
+
+model billing {
+  id             String        @id @default(uuid())
+  user_id        String
+  invoice_number String        @unique
+  sub_total      Float
+  tax            Float
+  discount       Float
+  total          Float
+  payment_method PaymentMethod
+  created_at     DateTime      @default(now())
+
+  user  user           @relation(fields: [user_id], references: [id])
+  items billing_item[]
+}
+
+model billing_item {
+  id            String   @id @default(uuid())
+  billing_id    String
+  product_id    String
+  quantity      Int
+  price_at_time Float
+  total         Float
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  billing billing @relation(fields: [billing_id], references: [id], onDelete: Cascade)
+  product product @relation(fields: [product_id], references: [id])
+}
+
 
