@@ -37,7 +37,7 @@ model user {
   billings   billing[]
   logs       log[]
   categories category[]
-  cart_items billing_cart_item[]   // <--- NEW
+  cart_items billing_cart_item[]  
 }
 
 model log {
@@ -73,7 +73,7 @@ model product {
 
   category     category?     @relation(fields: [category_id], references: [id], onDelete: SetNull)
   billingItems billing_item[]
-  cart_items   billing_cart_item[]   // <--- NEW
+  cart_items   billing_cart_item[]   
 }
 
 model billing_cart_item {
@@ -91,6 +91,7 @@ model billing_cart_item {
 model billing {
   id             String        @id @default(uuid())
   user_id        String
+  customer_name  String?
   invoice_number String        @unique
   sub_total      Float
   tax            Float

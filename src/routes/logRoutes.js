@@ -3,6 +3,17 @@ import prisma from "../prismaClient.js";
 
 const router = express.Router();
 
+// A helper function to add logs
+export async function addLog(userId, action, description = null) {
+  await prisma.log.create({
+    data: {
+      user_id: userId,
+      action,
+      description,
+    },
+  });
+}
+
 //Get all the logs
 router.get("/", async (req, res) => {
   try {
@@ -25,7 +36,7 @@ router.get("/:logId", async (req, res) => {
     const { logId } = req.params; 
 
     const log = await prisma.log.findUnique({
-        where: { id: productId },
+        where: { id: logId },
     });
 
     if(!log){
