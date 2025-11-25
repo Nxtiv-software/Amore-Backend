@@ -371,6 +371,57 @@ router.delete("/:userId/carts/:cartId", async (req, res) => {
   }
 });
 
+//Creating the bill
+router.post("/:userId/checkout", async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { payment_method, discount = 0, tax = 0 } = req.body; 
+
+    const cartItems = await prisma.billing_cart_item.findMany({
+      where: { user_id: userId },
+      include: { product: true },
+    });
+
+    if (!cartItems.length) {
+      return res.status(400).json({ message: "Cart is empty" });
+    }
+
+    const sub_total = cartItems.reduce((sum, item) => sum + item.quantity * item.product.price, 0);
+    const total = sub_total + tax - discount;
+
+    const invoice_number = `INV-${Date.now()}`;
+
+    const bill = await prisma.billing.create({
+      data: {
+        user_id: userId,
+        invoice_number,
+        sub_total,
+        tax,
+        discount,
+        total,
+        payment_method,
+      },
+    });
+
+    // Create billing items
+    const billingItemsData = cartItems.map(item => ({
+      billing_id: bill.id,
+      product_id: item.product_id,
+      quantity: item.quantity,
+      price_at_time: item.product.price,
+      total: item.quantity * item.product.price,
+    }));
+
+    await prisma.billing_item.createMany({ data: billingItemsData });
+
+    await prisma.billing_cart_item.deleteMany({ where: { user_id: userId } });
+
+    res.status(201).json({ message: "Checkout successful", bill });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Failed to checkout" });
+  }
+});
 
 
 
