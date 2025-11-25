@@ -1,5 +1,6 @@
 import express from "express";
 import prisma from "../prismaClient.js";
+import { addLog } from "./logRoutes.js";
 
 const router = express.Router();
 
@@ -60,6 +61,9 @@ router.post("/:userId/categories", async (req, res) => {
       },
     });
 
+    //Adding logs
+    await addLog(userId, "Add category", `Added ${name} category`);
+
     res.status(201).json({
       message: "Category created successfully",
       newCategory,
@@ -73,7 +77,7 @@ router.post("/:userId/categories", async (req, res) => {
 // Update a category by a user
 router.put("/:userId/categories/:categoryId", async (req, res) => {
   try {
-    const { categoryId } = req.params;
+    const { userId, categoryId } = req.params;
     const { name, description } = req.body;
 
     const category = await prisma.category.findUnique({
@@ -105,6 +109,9 @@ router.put("/:userId/categories/:categoryId", async (req, res) => {
       },
     });
 
+    //Adding logs
+    await addLog(userId, "Update category", `Updated ${name} category`);
+
     res.json({
       message: "Category updated successfully",
       updatedCategory,
@@ -118,7 +125,7 @@ router.put("/:userId/categories/:categoryId", async (req, res) => {
 //Delete a category by a user
 router.delete("/:userId/categories/:categoryId", async (req, res) => {
   try {
-    const { categoryId} = req.params;
+    const { userId, categoryId} = req.params;
 
     const category = await prisma.category.findUnique({
       where: { id: categoryId },
@@ -132,6 +139,9 @@ router.delete("/:userId/categories/:categoryId", async (req, res) => {
       where: { id: categoryId },
     });
 
+    //Adding logs
+    await addLog(userId, "Delete category", `Deleted ${category.name} category`);
+
     res.json({
       message: "Category deleted successfully",
     });
@@ -144,7 +154,7 @@ router.delete("/:userId/categories/:categoryId", async (req, res) => {
 // Add a product by a user
 router.post("/:userId/categories/:categoryId/products", async (req, res) => {
   try {
-    const { categoryId } = req.params;
+    const { userId, categoryId } = req.params;
     const { name, description, price } = req.body;
 
     const category = await prisma.category.findUnique({
@@ -174,6 +184,9 @@ router.post("/:userId/categories/:categoryId/products", async (req, res) => {
         price: price,
       },
     });
+
+    //Adding logs
+    await addLog(userId, "Add product", `Added ${name} product`);
 
     res.status(201).json({
       message: "Product created successfully",
@@ -225,6 +238,9 @@ router.put("/:userId/categories/:categoryId/products/:productId", async (req, re
       },
     });
 
+    //Adding logs
+    await addLog(userId, "Update product", `Update ${name} product`);
+
     res.json({
       message: "Product updated successfully",
       product: updatedProduct,
@@ -254,6 +270,9 @@ router.delete("/:userId/categories/:categoryId/products/:productId", async (req,
     await prisma.product.delete({
       where: { id: productId },
     });
+
+    //Adding logs
+    await addLog(userId, "Delete product", `Delete ${product.name} product`);
 
     res.json({ message: "Product deleted successfully" });
   } catch (error) {
@@ -295,6 +314,9 @@ router.post("/:userId/carts", async (req, res) => {
         }
       });
     }
+
+    //Adding logs
+    await addLog(userId, "Add item to cart");
 
     res.json(item);
   } catch (error) {
@@ -340,6 +362,9 @@ router.put("/:userId/carts/:cartId", async (req, res) => {
       data: { quantity }
     });
 
+    //Adding logs
+    await addLog(userId, "Updated cart item");
+
     res.json(updated);
   } catch (error) {
     res.status(500).json({ message: "Failed to update cart item" });
@@ -365,6 +390,9 @@ router.delete("/:userId/carts/:cartId", async (req, res) => {
       }
     });
 
+    //Adding logs
+    await addLog(userId, "Deleted cart item");
+
     res.json({ message: "Item removed" });
   } catch (error) {
     res.status(500).json({ message: "Failed to remove cart item" });
@@ -375,7 +403,7 @@ router.delete("/:userId/carts/:cartId", async (req, res) => {
 router.post("/:userId/checkout", async (req, res) => {
   try {
     const { userId } = req.params;
-    const { payment_method, discount = 0, tax = 0 } = req.body; 
+    const { payment_method, discount = 0, tax = 0, customer_name } = req.body; 
 
     const cartItems = await prisma.billing_cart_item.findMany({
       where: { user_id: userId },
@@ -394,6 +422,7 @@ router.post("/:userId/checkout", async (req, res) => {
     const bill = await prisma.billing.create({
       data: {
         user_id: userId,
+        customer_name,
         invoice_number,
         sub_total,
         tax,
@@ -416,13 +445,14 @@ router.post("/:userId/checkout", async (req, res) => {
 
     await prisma.billing_cart_item.deleteMany({ where: { user_id: userId } });
 
+    //Adding logs
+    await addLog(userId, "Created a bill");
+
     res.status(201).json({ message: "Checkout successful", bill });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Failed to checkout" });
   }
 });
-
-
 
 export default router;
