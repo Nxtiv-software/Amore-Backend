@@ -4,7 +4,7 @@ import prisma from "../prismaClient.js";
 const router = express.Router();
 
 //Get all the users
-router.get("/users", async (req, res) => {
+router.get("/", async (req, res) => {
   try {
     const users = await prisma.user.findMany();
 
@@ -20,7 +20,7 @@ router.get("/users", async (req, res) => {
 });
 
 //Get user by Id
-router.get("/users/:userId", async (req, res) => {
+router.get("/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
 
