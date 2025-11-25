@@ -28,58 +28,68 @@ enum PaymentMethod {
 // -----------------------------------
 
 model user {
-  id             String        @id @default(uuid())
-  username       String        @unique
-  password       String
-  created_at     DateTime      @default(now())
-  updated_at     DateTime      @updatedAt
+  id         String   @id @default(uuid())
+  username   String   @unique
+  password   String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 
-  // Relations
-  billings       billing[]
-  logs           log[]
-  categories     category[]
+  billings   billing[]
+  logs       log[]
+  categories category[]
+  cart_items billing_cart_item[]   // <--- NEW
 }
 
 model log {
-  id          String       @id @default(uuid())
+  id          String   @id @default(uuid())
   user_id     String
   action      String
   description String?
-  created_at  DateTime  @default(now())
+  created_at  DateTime @default(now())
 
-  // Relations
   user user @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }
 
 model category {
-  id          String        @id @default(uuid())
-  user_id     String 
+  id          String   @id @default(uuid())
+  user_id     String
   name        String
   description String?
-  created_at  DateTime   @default(now())
-  updated_at  DateTime   @updatedAt
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
 
-  // Relations
   user     user      @relation(fields: [user_id], references: [id], onDelete: Cascade)
   products product[]
 }
 
 model product {
-  id          String        @id @default(uuid())
-  category_id String
+  id          String    @id @default(uuid())
+  category_id String?
   name        String
   description String?
   price       Float
-  created_at  DateTime   @default(now())
-  updated_at  DateTime   @updatedAt
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
 
-  // Relations
-  category category @relation(fields: [category_id], references: [id], onDelete: SetNull)
+  category     category?     @relation(fields: [category_id], references: [id], onDelete: SetNull)
   billingItems billing_item[]
+  cart_items   billing_cart_item[]   // <--- NEW
+}
+
+model billing_cart_item {
+  id         String   @id @default(uuid())
+  user_id    String
+  product_id String
+  quantity   Int
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  user    user    @relation(fields: [user_id], references: [id])
+  product product @relation(fields: [product_id], references: [id])
 }
 
 model billing {
-  id             String          @id @default(uuid())
+  id             String        @id @default(uuid())
   user_id        String
   invoice_number String        @unique
   sub_total      Float
@@ -89,23 +99,22 @@ model billing {
   payment_method PaymentMethod
   created_at     DateTime      @default(now())
 
-  // Relations
-  user user @relation(fields: [user_id], references: [id])
+  user  user           @relation(fields: [user_id], references: [id])
   items billing_item[]
 }
 
 model billing_item {
-  id            String        @id @default(uuid())
+  id            String   @id @default(uuid())
   billing_id    String
   product_id    String
   quantity      Int
   price_at_time Float
   total         Float
-  created_at    DateTime   @default(now())
-  updated_at    DateTime   @updatedAt
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
 
-  // Relations
   billing billing @relation(fields: [billing_id], references: [id], onDelete: Cascade)
   product product @relation(fields: [product_id], references: [id])
 }
+
 

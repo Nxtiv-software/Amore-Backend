@@ -262,4 +262,38 @@ router.delete("/:userId/categories/:categoryId/products/:productId", async (req,
   }
 });
 
+// // Add a item to a cart by a user
+router.post("/:userId/carts", async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { productId, quantity } = req.body;
+
+    const existing = await prisma.billing_cart_item.findFirst({
+      where: { user_id, product_id }
+    });
+
+    let item;
+
+    if (existing) {
+      // Update quantity
+      item = await prisma.billing_cart_item.update({
+        where: { id: existing.id },
+        data: {
+          quantity: existing.quantity + quantity
+        }
+      });
+    } else {
+      // Create new cart item
+      item = await prisma.billing_cart_item.create({
+        data: { user_id, product_id, quantity }
+      });
+    }
+
+    res.json(item);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Failed to add to cart" });
+  }
+});
+
 export default router;
