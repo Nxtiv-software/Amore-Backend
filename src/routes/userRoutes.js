@@ -262,14 +262,17 @@ router.delete("/:userId/categories/:categoryId/products/:productId", async (req,
   }
 });
 
-// // Add a item to a cart by a user
+// Add a item to a cart by a user
 router.post("/:userId/carts", async (req, res) => {
   try {
     const { userId } = req.params;
     const { productId, quantity } = req.body;
 
     const existing = await prisma.billing_cart_item.findFirst({
-      where: { user_id, product_id }
+      where: { 
+        user_id: userId, 
+        product_id: productId,
+      }
     });
 
     let item;
@@ -285,7 +288,11 @@ router.post("/:userId/carts", async (req, res) => {
     } else {
       // Create new cart item
       item = await prisma.billing_cart_item.create({
-        data: { user_id, product_id, quantity }
+        data: { 
+          user_id: userId, 
+          product_id: productId, 
+          quantity: quantity,
+        }
       });
     }
 
@@ -295,5 +302,76 @@ router.post("/:userId/carts", async (req, res) => {
     res.status(500).json({ message: "Failed to add to cart" });
   }
 });
+
+// Get the cart by a user
+router.get("/:userId/carts", async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const items = await prisma.billing_cart_item.findMany({
+      where: { user_id: userId },
+      include: {
+        product: true
+      }
+    });
+
+    res.json(items);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch cart" });
+  }
+});
+
+// Update the cart item by a user
+router.put("/:userId/carts/:cartId", async (req, res) => {
+  try {
+    const { userId, cartId } = req.params;
+    const { quantity } = req.body;
+
+    const item = await prisma.billing_cart_item.findUnique({
+      where: { id: cartId }
+    });
+
+    if (!item || item.user_id !== userId) {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+
+    const updated = await prisma.billing_cart_item.update({
+      where: { id: cartId },
+      data: { quantity }
+    });
+
+    res.json(updated);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to update cart item" });
+  }
+});
+
+// Delete the cart item by a user
+router.delete("/:userId/carts/:cartId", async (req, res) => {
+  try {
+    const { userId, cartId } = req.params;
+
+    const item = await prisma.billing_cart_item.findUnique({
+      where: { id: cartId }
+    });
+
+    if (!item || item.user_id !== userId) {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+
+    await prisma.billing_cart_item.delete({
+      where: {
+        id: cartId,
+      }
+    });
+
+    res.json({ message: "Item removed" });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to remove cart item" });
+  }
+});
+
+
+
 
 export default router;
