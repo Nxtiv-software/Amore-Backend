@@ -39,6 +39,21 @@ router.get("/:billingId", async (req, res) => {
   }
 });
 
+// Get billing items of a bill
+router.get("/:billingId/items", async (req, res) => {
+  try {
+    const { billingId } = req.params;
 
+    const items = await prisma.billing_item.findMany({
+      where: { billing_id: billingId },
+      include: { product: true },
+    });
+
+    res.json(items);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Failed to fetch billing items" });
+  }
+});
 
 export default router;
