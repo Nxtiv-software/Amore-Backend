@@ -6,6 +6,9 @@ import cors from "cors";
 import authRoutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
+import billingRoutes from "./routes/billingRoutes.js";
+import categoryRoutes from "./routes/categoryRoutes.js";
+import logRoutes from "./routes/logRoutes.js";
 
 //Middleware imports
 import authMiddleware from "./middleware/authMiddleware.js";
@@ -30,6 +33,9 @@ app.get("/", (req, res) => {
 
 app.use("/auth", authRoutes);
 app.use("/users", authMiddleware, userRoutes);
-app.use("/products", productRoutes);
+app.use("/products", authMiddleware, productRoutes);
+app.use("/billings", authMiddleware, billingRoutes);
+app.use("/categories", authMiddleware, categoryRoutes);
+app.user("/logs", authMiddleware, logRoutes);
 
 app.listen(PORT, () => console.log(`Server has started on ${PORT}`));
